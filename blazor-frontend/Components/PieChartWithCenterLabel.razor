@@ -1,0 +1,24 @@
+<MudCard Elevation="2" Style="max-width: 400px;">
+    <MudCardContent>
+        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-4">@Title</MudText>
+        @if (Data != null && Data.Any())
+        {
+            <MudList T="string">
+                @foreach (var item in Data)
+                {
+                    <MudListItem T="string">
+                        <div class="d-flex justify-space-between align-center" style="width: 100%;">
+                            <MudText>@item.Label</MudText>
+                            <MudChip T="string" Color="Color.Primary">@item.Value.ToString("N0")</MudChip>
+                        </div>
+                    </MudListItem>
+                }
+            </MudList>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public List<PieChartData>? Data { get; set; }
+    [Parameter] public string Title { get; set; } = string.Empty;
+}

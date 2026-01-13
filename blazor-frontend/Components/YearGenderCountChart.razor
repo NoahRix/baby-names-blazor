@@ -1,0 +1,88 @@
+@inject HttpClient Http
+@inject AppState AppState
+
+@if (dataLoaded.Any())
+{
+    <MudPaper Class="pa-4" Style="width: 100%; max-width: 1600px;">
+        <MudCard>
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-4">Gender Count by Year</MudText>
+                <MudTable Items="@dataLoaded.Take(20)" Dense="true" Hover="true">
+                    <HeaderContent>
+                        <MudTh>Year</MudTh>
+                        <MudTh>Male Count</MudTh>
+                        <MudTh>Female Count</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Year">@context.Year</MudTd>
+                        <MudTd DataLabel="Male">@context.MaleCount.ToString("N0")</MudTd>
+                        <MudTd DataLabel="Female">@context.FemaleCount.ToString("N0")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudCardContent>
+        </MudCard>
+    </MudPaper>
+}
+
+@code {
+    private List<YearGenderData> dataLoaded = new();
+    private bool hasInitialized = false;
+
+    protected override void OnInitialized()
+    {
+        AppState.OnChange += OnStateChanged;
+    }
+
+    private async void OnStateChanged()
+    {
+        if (AppState.SelectedStateMinYear != null && 
+            AppState.SelectedStateMaxYear != null && 
+            AppState.SelectedState != null)
+        {
+            await LoadDataAsync();
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!hasInitialized && 
+            AppState.SelectedStateMinYear != null && 
+            AppState.SelectedStateMaxYear != null && 
+            AppState.SelectedState != null)
+        {
+            hasInitialized = true;
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        try
+        {
+            var result = await Http.GetFromJsonAsync<List<YearGenderData>>(
+                $"/api/BabyNames/year-gender-counts?minYear={AppState.SelectedStateMinYear}&maxYear={AppState.SelectedStateMaxYear}&stateCode={AppState.SelectedState?.StateCode}");
+
+            if (result != null)
+            {
+                dataLoaded = result;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching year-gender counts: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= OnStateChanged;
+    }
+
+    public class YearGenderData
+    {
+        public int Year { get; set; }
+        public int MaleCount { get; set; }
+        public int FemaleCount { get; set; }
+    }
+}

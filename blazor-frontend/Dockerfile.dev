@@ -1,0 +1,20 @@
+# Use official .NET SDK image for building
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+# Copy csproj and restore dependencies
+COPY blazor-frontend.csproj .
+RUN dotnet restore
+
+# Copy everything else and build
+COPY . .
+RUN dotnet publish -c Release -o /app/publish
+
+# Use nginx to serve the static files
+FROM nginx:alpine
+WORKDIR /usr/share/nginx/html
+
+# Copy the published Blazor app
+COPY --from=build /app/publish/wwwroot .
+
+# Do not copy nginx configuration here — standalone nginx service will provide it

@@ -1,0 +1,114 @@
+@inject AppState AppState
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<MudPaper Class="pa-4" Style="width: 100%; max-width: 1600px; margin: 0 auto;">
+    @if (errorMessage != null)
+    {
+        <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+    }
+    @if (states == null)
+    {
+        <p>Loading states...</p>
+    }
+    else if (states.Length == 0)
+    {
+        <p>No states found</p>
+    }
+    <svg viewBox="0 0 950 600" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; border: 2px solid red;">
+        <rect x="0" y="0" width="950" height="600" fill="#f0f0f0" />
+        @if (states != null)
+        {
+            @foreach (var state in states)
+            {
+                <path d="@state.DrawPath"
+                      stroke="white"
+                      stroke-width="1"
+                      fill="@GetFillColor(state)"
+                      @onmouseenter="@(() => OnMouseEnter(state))"
+                      @onmouseleave="OnMouseLeave"
+                      @onclick="@(() => OnClickAsync(state))"
+                      style="cursor: pointer;">
+                    <title>@state.StateName</title>
+                </path>
+            }
+        }
+    </svg>
+</MudPaper>
+
+@code {
+    private StateInfo[]? states;
+    private string? hoveredState;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            states = await Http.GetFromJsonAsync<StateInfo[]>("us_states_paths.json");
+            if (states == null || states.Length == 0)
+            {
+                errorMessage = "States array is null or empty";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading states: {ex.Message}";
+        }
+        AppState.OnChange += StateHasChanged;
+    }
+
+    private void OnMouseEnter(StateInfo state)
+    {
+        hoveredState = state.StateName;
+    }
+
+    private void OnMouseLeave()
+    {
+        hoveredState = null;
+    }
+
+    private async Task OnClickAsync(StateInfo state)
+    {
+        try
+        {
+            var result = await Http.GetFromJsonAsync<MinMaxYearDto>(
+                $"/api/BabyNames/min-max-years-using-state?stateCode={state.StateCode}");
+
+            if (result != null)
+            {
+                // Batch all state updates into one to prevent multiple OnChange events
+                AppState.SetStateWithYearRange(state, result.MinYear, result.MaxYear);
+                
+                if (AppState.CommitedYear == null)
+                {
+                    AppState.SetCommitedYear(result.MinYear);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching min/max years: {ex.Message}");
+        }
+    }
+
+    private string GetFillColor(StateInfo state)
+    {
+        if (AppState.SelectedState?.StateName == state.StateName)
+            return "orange";
+        if (hoveredState == state.StateName)
+            return "#4CAF50";
+        return "#2196F3";
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= StateHasChanged;
+    }
+
+    public class MinMaxYearDto
+    {
+        public int MinYear { get; set; }
+        public int MaxYear { get; set; }
+    }
+}

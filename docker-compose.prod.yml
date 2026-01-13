@@ -4,12 +4,12 @@ networks:
 services:
 
   frontend:
-    container_name: frontend-prod
+    container_name: blazor-frontend-prod
     build:
-      context: ./frontend
+      context: ./blazor-frontend
       dockerfile: Dockerfile.prod
     ports:
-      - "5175:5175"       
+      - "5175:5174"       
     networks:
       - prod-net
     depends_on:

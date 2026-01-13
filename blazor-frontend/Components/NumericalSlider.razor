@@ -1,0 +1,51 @@
+@inject AppState AppState
+@inject HttpClient Http
+
+<div style="padding: 20px; width: 90%; display: flex; flex-direction: column; align-items: center;">
+    <div style="width: 100%; display: flex; justify-content: space-between;">
+        <MudText Typo="Typo.body2">@AppState.SelectedStateMinYear</MudText>
+        <MudText Typo="Typo.body2">@AppState.SelectedStateMaxYear</MudText>
+    </div>
+    <MudSlider T="int" 
+               Value="@(AppState.SelectedYear ?? 0)" 
+               ValueChanged="@OnValueChanged"
+               Min="@(AppState.SelectedStateMinYear ?? 0)"
+               Max="@(AppState.SelectedStateMaxYear ?? 0)"
+               Step="1"
+               ValueLabel="true"
+               Style="width: 100%;">
+    </MudSlider>
+</div>
+
+@code {
+    private async Task OnValueChanged(int value)
+    {
+        AppState.SetSelectedYear(value);
+        AppState.SetCommitedYear(value);
+
+        if (AppState.SelectedState == null || value == 0)
+            return;
+
+        try
+        {
+            var result = await Http.GetFromJsonAsync<MaleFemaleCountsDto>(
+                $"/api/BabyNames/male-female-counts?stateCode={AppState.SelectedState.StateCode}&year={value}");
+
+            if (result != null)
+            {
+                AppState.SetDistinctMaleCountForSelectedState(result.Item1);
+                AppState.SetDistinctFemaleCountForSelectedState(result.Item2);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching male/female counts: {ex.Message}");
+        }
+    }
+
+    public class MaleFemaleCountsDto
+    {
+        public int Item1 { get; set; }
+        public int Item2 { get; set; }
+    }
+}

@@ -1,0 +1,143 @@
+﻿@page "/"
+@inject AppState AppState
+@inject HttpClient Http
+
+<PageTitle>Baby Names Explorer</PageTitle>
+
+<h1>Baby Names Explorer</h1>
+<p>Test: This should be visible</p>
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="d-flex flex-column align-center">
+    <MudPaper Class="pa-4 ma-4" Elevation="0" Style="width: 100%;">
+        <h2>US Map Component Below:</h2>
+        <USMap />
+        
+        @if (AppState.SelectedState != null)
+        {
+            <div class="d-flex flex-column align-center mt-4">
+                <MudText Typo="Typo.h6">Select a year</MudText>
+                <MudText>@AppState.SelectedYear</MudText>
+                <NumericalSlider />
+            </div>
+        }
+    </MudPaper>
+
+    <YearGenderCountChart />
+
+    @if (AppState.CommitedYear != null && AppState.TopPopularMaleFemaleNameCounts != null)
+    {
+        <MudGrid Spacing="6" Justify="Justify.Center" Style="width: 90%; max-width: 100%; margin-top: 2rem;">
+            <MudItem xs="12" md="6" Class="d-flex flex-column align-center">
+                <MudText Typo="Typo.h6">
+                    Distinct Male Name Count: @AppState.DistinctMaleCountForSelectedState?.ToString("N0")
+                </MudText>
+                <PieChartWithCenterLabel 
+                    Title="@($"Top 5 Male Names for {AppState.SelectedState?.StateName}")"
+                    Data="@AppState.TopPopularMaleFemaleNameCounts.Male" />
+            </MudItem>
+            <MudItem xs="12" md="6" Class="d-flex flex-column align-center">
+                <MudText Typo="Typo.h6">
+                    Distinct Female Name Count: @AppState.DistinctFemaleCountForSelectedState?.ToString("N0")
+                </MudText>
+                <PieChartWithCenterLabel 
+                    Title="@($"Top 5 Female Names for {AppState.SelectedState?.StateName}")"
+                    Data="@AppState.TopPopularMaleFemaleNameCounts.Female" />
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private bool isLoadingData = false;
+    
+    protected override void OnInitialized()
+    {
+        AppState.OnChange += OnStateChanged;
+    }
+
+    private async void OnStateChanged()
+    {
+        // Prevent duplicate calls while already loading
+        if (isLoadingData)
+            return;
+
+        if (AppState.CommitedYear != null && 
+            AppState.SelectedState != null && 
+            AppState.SelectedStateMinYear != null && 
+            AppState.SelectedStateMaxYear != null)
+        {
+            isLoadingData = true;
+            
+            try
+            {
+                if (AppState.CommitedYear >= AppState.SelectedStateMinYear && 
+                    AppState.CommitedYear <= AppState.SelectedStateMaxYear)
+                {
+                    await GetDistinctGenderCountsAsync();
+                    await GetTopPopularMaleFemaleNameCountsAsync();
+                }
+                else
+                {
+                    AppState.SetCommitedYear(AppState.SelectedStateMinYear);
+                    await GetDistinctGenderCountsAsync();
+                }
+                StateHasChanged();
+            }
+            finally
+            {
+                isLoadingData = false;
+            }
+        }
+    }
+
+    private async Task GetDistinctGenderCountsAsync()
+    {
+        if (AppState.CommitedYear == null || AppState.CommitedYear == 0)
+            return;
+
+        try
+        {
+            var result = await Http.GetFromJsonAsync<MaleFemaleCountsDto>(
+                $"/api/BabyNames/male-female-counts?stateCode={AppState.SelectedState?.StateCode}&year={AppState.CommitedYear}");
+
+            if (result != null)
+            {
+                AppState.SetDistinctMaleCountForSelectedState(result.Item1);
+                AppState.SetDistinctFemaleCountForSelectedState(result.Item2);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    private async Task GetTopPopularMaleFemaleNameCountsAsync()
+    {
+        if (AppState.SelectedState == null || AppState.CommitedYear == null)
+            return;
+
+        try
+        {
+            var result = await Http.GetFromJsonAsync<TopPopularMaleFemaleNameCounts>(
+                $"/api/BabyNames/top-popular-male-female-name-counts?stateCode={AppState.SelectedState.StateCode}&year={AppState.CommitedYear}");
+
+            AppState.SetTopPopularMaleFemaleNameCounts(result);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= OnStateChanged;
+    }
+
+    public class MaleFemaleCountsDto
+    {
+        public int Item1 { get; set; }
+        public int Item2 { get; set; }
+    }
+}
