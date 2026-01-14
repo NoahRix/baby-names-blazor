@@ -3,13 +3,24 @@ networks:
 
 services:
 
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-prod
+    ports:
+      - "5175:5174"
+    volumes:
+      - ./blazor-frontend/nginx.prod.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - frontend
+      - api
+    networks:
+      - prod-net
+
   frontend:
     container_name: blazor-frontend-prod
     build:
       context: ./blazor-frontend
       dockerfile: Dockerfile.prod
-    ports:
-      - "5175:5174"       
     networks:
       - prod-net
     depends_on:

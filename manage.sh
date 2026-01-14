@@ -13,6 +13,8 @@ BOLD='\033[1m'
 # Docker compose files
 DEV_COMPOSE="docker-compose.dev.yml"
 PROD_COMPOSE="docker-compose.prod.yml"
+DEV_PROJECT="baby-names-blazor-dev"
+PROD_PROJECT="baby-names-blazor-prod"
 
 # Function to print header
 print_header() {
@@ -51,69 +53,69 @@ print_menu() {
 # Function to start dev
 start_dev() {
     echo -e "${GREEN}${BOLD}Starting Development Environment...${NC}"
-    docker compose -f $DEV_COMPOSE up -d
+    docker compose -p $DEV_PROJECT -f $DEV_COMPOSE up -d --remove-orphans
     echo -e "${GREEN}✓ Development environment started${NC}"
 }
 
 # Function to stop dev
 stop_dev() {
     echo -e "${YELLOW}${BOLD}Stopping Development Environment...${NC}"
-    docker compose -f $DEV_COMPOSE down
+    docker compose -p $DEV_PROJECT -f $DEV_COMPOSE down
     echo -e "${YELLOW}✓ Development environment stopped${NC}"
 }
 
 # Function to restart dev
 restart_dev() {
     echo -e "${YELLOW}${BOLD}Restarting Development Environment...${NC}"
-    docker compose -f $DEV_COMPOSE down
-    docker compose -f $DEV_COMPOSE up -d
+    docker compose -p $DEV_PROJECT -f $DEV_COMPOSE down
+    docker compose -p $DEV_PROJECT -f $DEV_COMPOSE up -d --remove-orphans
     echo -e "${GREEN}✓ Development environment restarted${NC}"
 }
 
 # Function to start prod
 start_prod() {
     echo -e "${GREEN}${BOLD}Starting Production Environment...${NC}"
-    docker compose -f $PROD_COMPOSE up -d
+    docker compose -p $PROD_PROJECT -f $PROD_COMPOSE up -d --remove-orphans
     echo -e "${GREEN}✓ Production environment started${NC}"
 }
 
 # Function to stop prod
 stop_prod() {
     echo -e "${YELLOW}${BOLD}Stopping Production Environment...${NC}"
-    docker compose -f $PROD_COMPOSE down
+    docker compose -p $PROD_PROJECT -f $PROD_COMPOSE down
     echo -e "${YELLOW}✓ Production environment stopped${NC}"
 }
 
 # Function to restart prod
 restart_prod() {
     echo -e "${YELLOW}${BOLD}Restarting Production Environment...${NC}"
-    docker compose -f $PROD_COMPOSE down
-    docker compose -f $PROD_COMPOSE up -d
+    docker compose -p $PROD_PROJECT -f $PROD_COMPOSE down
+    docker compose -p $PROD_PROJECT -f $PROD_COMPOSE up -d --remove-orphans
     echo -e "${GREEN}✓ Production environment restarted${NC}"
 }
 
 # Function to view dev status
 status_dev() {
     echo -e "${BLUE}${BOLD}Development Environment Status:${NC}"
-    docker compose -f $DEV_COMPOSE ps
+    docker compose -p $DEV_PROJECT -f $DEV_COMPOSE ps
 }
 
 # Function to view prod status
 status_prod() {
     echo -e "${BLUE}${BOLD}Production Environment Status:${NC}"
-    docker compose -f $PROD_COMPOSE ps
+    docker compose -p $PROD_PROJECT -f $PROD_COMPOSE ps
 }
 
 # Function to view dev logs
 logs_dev() {
     echo -e "${BLUE}${BOLD}Development Environment Logs (Ctrl+C to exit):${NC}"
-    docker compose -f $DEV_COMPOSE logs -f
+    docker compose -p $DEV_PROJECT -f $DEV_COMPOSE logs -f
 }
 
 # Function to view prod logs
 logs_prod() {
     echo -e "${BLUE}${BOLD}Production Environment Logs (Ctrl+C to exit):${NC}"
-    docker compose -f $PROD_COMPOSE logs -f
+    docker compose -p $PROD_PROJECT -f $PROD_COMPOSE logs -f
 }
 
 # Function to pause for user
@@ -122,58 +124,50 @@ pause() {
     read -p "Press [Enter] to continue..."
 }
 
-# Main loop
-while true; do
-    print_menu
-    read -p "Enter your choice [0-10]: " choice
-    echo ""
-    
-    case $choice in
-        1)
-            start_dev
-            pause
-            ;;
-        2)
-            stop_dev
-            pause
-            ;;
-        3)
-            restart_dev
-            pause
-            ;;
-        4)
-            start_prod
-            pause
-            ;;
-        5)
-            stop_prod
-            pause
-            ;;
-        6)
-            restart_prod
-            pause
-            ;;
-        7)
-            status_dev
-            pause
-            ;;
-        8)
-            status_prod
-            pause
-            ;;
-        9)
-            logs_dev
-            ;;
-        10)
-            logs_prod
-            ;;
-        0)
-            echo -e "${GREEN}${BOLD}Goodbye!${NC}"
-            exit 0
-            ;;
-        *)
-            echo -e "${RED}Invalid option. Please try again.${NC}"
-            pause
-            ;;
-    esac
-done
+# One-shot menu: show options, execute the chosen action, then exit
+print_menu
+read -p "Enter your choice [0-10]: " choice
+echo ""
+
+case $choice in
+    1)
+        start_dev
+        ;;
+    2)
+        stop_dev
+        ;;
+    3)
+        restart_dev
+        ;;
+    4)
+        start_prod
+        ;;
+    5)
+        stop_prod
+        ;;
+    6)
+        restart_prod
+        ;;
+    7)
+        status_dev
+        ;;
+    8)
+        status_prod
+        ;;
+    9)
+        logs_dev
+        ;;
+    10)
+        logs_prod
+        ;;
+    0)
+        echo -e "${GREEN}${BOLD}Goodbye!${NC}"
+        exit 0
+        ;;
+    *)
+        echo -e "${RED}Invalid option.${NC}"
+        exit 1
+        ;;
+esac
+
+exit 0
