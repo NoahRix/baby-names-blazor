@@ -21,6 +21,15 @@ services:
       context: ./blazor-frontend
       dockerfile: Dockerfile.dev
     restart: unless-stopped
+    expose:
+      - "5174"
+      - "34005"
+    environment:
+      - ASPNETCORE_AUTO_RELOAD_WS_ENDPOINT=wss://$${HOST:-dev.babynamesblazor.noahrix.com}/wss-watch
+    volumes:
+      - ./blazor-frontend:/app
+      - /app/bin
+      - /app/obj
     depends_on:
       - api
     networks:
