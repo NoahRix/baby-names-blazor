@@ -22,14 +22,16 @@ services:
       dockerfile: Dockerfile.dev
     restart: unless-stopped
     expose:
-      - "5174"
-      - "34005"
-    environment:
-      - ASPNETCORE_AUTO_RELOAD_WS_ENDPOINT=wss://$${HOST:-dev.babynamesblazor.noahrix.com}/wss-watch
+      - "5173"
     volumes:
       - ./blazor-frontend:/app
       - /app/bin
       - /app/obj
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DOTNET_USE_POLLING_FILE_WATCHER=true
+      - ASPNETCORE_URLS=http://0.0.0.0:5173
+    command: dotnet watch run --non-interactive
     depends_on:
       - api
     networks:

@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS development
+FROM mcr.microsoft.com/dotnet/sdk:9.0
 WORKDIR /app
 
 # Copy project files and restore
@@ -8,16 +8,7 @@ RUN dotnet restore
 # Copy everything
 COPY . .
 
-EXPOSE 5174
+EXPOSE 5173
 
 # Use dotnet watch for hot reload
-ENTRYPOINT ["dotnet", "watch", "run", "--non-interactive", "--urls", "http://0.0.0.0:5174"]
-
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS development
-WORKDIR /app
-
-COPY . .
-RUN dotnet restore
-
-EXPOSE 5174
-ENTRYPOINT ["dotnet", "watch", "run", "--non-interactive", "--urls", "http://0.0.0.0:5174"]
+ENTRYPOINT ["dotnet", "watch"]
