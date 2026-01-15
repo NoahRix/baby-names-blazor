@@ -75,7 +75,7 @@ restart_dev() {
 # Function to start prod
 start_prod() {
     echo -e "${GREEN}${BOLD}Starting Production Environment...${NC}"
-    docker compose -p $PROD_PROJECT -f $PROD_COMPOSE up -d --remove-orphans
+    docker compose -p $PROD_PROJECT -f $PROD_COMPOSE up --build -d --remove-orphans
     echo -e "${GREEN}✓ Production environment started${NC}"
 }
 
@@ -90,7 +90,7 @@ stop_prod() {
 restart_prod() {
     echo -e "${YELLOW}${BOLD}Restarting Production Environment...${NC}"
     docker compose -p $PROD_PROJECT -f $PROD_COMPOSE down
-    docker compose -p $PROD_PROJECT -f $PROD_COMPOSE up -d --remove-orphans
+    docker compose -p $PROD_PROJECT -f $PROD_COMPOSE up --build -d --remove-orphans
     echo -e "${GREEN}✓ Production environment restarted${NC}"
 }
 
