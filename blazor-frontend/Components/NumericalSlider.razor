@@ -1,38 +1,58 @@
 @inject AppState AppState
 @inject HttpClient Http
 @using blazor_frontend.Services
+@implements IDisposable
 
 <div style="width: 100%; max-width: 800px; margin: 0 auto; padding: 0 20px;">
-    <MudSlider T="int" 
-               Value="@(AppState.SelectedYear ?? AppState.CommitedYear ?? 0)" 
-               ValueChanged="@OnValueChanged"
-               Min="@(AppState.SelectedStateMinYear ?? 0)"
-               Max="@(AppState.SelectedStateMaxYear ?? 0)"
-               Step="1"
-               Color="Color.Primary"
-               Style="width: 100%;">
-        <MudText Typo="Typo.caption" Style="position: absolute; left: 0; bottom: -20px;">@AppState.SelectedStateMinYear</MudText>
-        <MudText Typo="Typo.caption" Style="position: absolute; right: 0; bottom: -20px;">@AppState.SelectedStateMaxYear</MudText>
-    </MudSlider>
+    <div style="position: relative; margin-bottom: 1rem;">
+        <MudText Typo="Typo.body1" Align="Align.Center" Style="margin-bottom: 0.5rem;">Select a year</MudText>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <MudText Typo="Typo.caption">@AppState.SelectedStateMinYear</MudText>
+            <MudText Typo="Typo.caption">@AppState.SelectedStateMaxYear</MudText>
+        </div>
+        <MudSlider T="int" 
+                   @bind-Value="selectedYear"
+                   Min="@(AppState.SelectedStateMinYear ?? 0)"
+                   Max="@(AppState.SelectedStateMaxYear ?? 0)"
+                   Step="1"
+                   TickMarks="true"
+                   Color="Color.Primary"
+                   Style="width: 100%;"
+                   @onmouseup="OnSliderReleased"
+                   @ontouchend="OnSliderReleased" />
+    </div>
 </div>
 
 @code {
-    private async Task OnValueChanged(int value)
-    {
-        AppState.SetSelectedYear(value);
-        AppState.SetCommitedYear(value);
+    private int selectedYear;
 
-        if (AppState.SelectedState == null || value == 0)
+    protected override void OnInitialized()
+    {
+        selectedYear = AppState.SelectedYear ?? AppState.CommitedYear ?? 0;
+        AppState.OnChange += StateHasChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        selectedYear = AppState.SelectedYear ?? AppState.CommitedYear ?? 0;
+    }
+
+    private async Task OnSliderReleased()
+    {
+        AppState.SetSelectedYear(selectedYear);
+        AppState.SetCommitedYear(selectedYear);
+
+        if (AppState.SelectedState == null || selectedYear == 0)
             return;
 
         try
         {
             // Fetch both male/female counts and top names
             var countsTask = Http.GetFromJsonAsync<MaleFemaleCountsDto>(
-                $"/api/BabyNames/male-female-counts?stateCode={AppState.SelectedState.StateCode}&year={value}");
+                $"/api/BabyNames/male-female-counts?stateCode={AppState.SelectedState.StateCode}&year={selectedYear}");
             
             var topNamesTask = Http.GetFromJsonAsync<TopPopularMaleFemaleNameCounts>(
-                $"/api/BabyNames/top-popular-male-female-name-counts?stateCode={AppState.SelectedState.StateCode}&year={value}");
+                $"/api/BabyNames/top-popular-male-female-name-counts?stateCode={AppState.SelectedState.StateCode}&year={selectedYear}");
 
             await Task.WhenAll(countsTask, topNamesTask);
 
@@ -54,6 +74,11 @@
         {
             Console.WriteLine($"Error fetching data for year change: {ex.Message}");
         }
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= StateHasChanged;
     }
 
     public class MaleFemaleCountsDto

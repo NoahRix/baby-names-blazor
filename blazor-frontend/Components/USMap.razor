@@ -83,7 +83,8 @@
                 {
                     Console.WriteLine($"Setting state with year range: {minMaxResult.MinYear}-{minMaxResult.MaxYear}");
                     
-                    var commitYear = AppState.CommitedYear ?? minMaxResult.MinYear;
+                    // Auto-set to min year when state is selected
+                    var commitYear = minMaxResult.MinYear;
 
                     // Now fetch the other data with the correct parameters
                     // Fetch year-gender counts with minYear and maxYear
