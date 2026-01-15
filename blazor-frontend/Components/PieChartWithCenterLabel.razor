@@ -1,24 +1,61 @@
-<MudCard Elevation="2" Style="max-width: 400px;">
-    <MudCardContent>
-        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-4">@Title</MudText>
-        @if (Data != null && Data.Any())
-        {
-            <MudList T="string">
-                @foreach (var item in Data)
-                {
-                    <MudListItem T="string">
-                        <div class="d-flex justify-space-between align-center" style="width: 100%;">
-                            <MudText>@item.Label</MudText>
-                            <MudChip T="string" Color="Color.Primary">@item.Value.ToString("N0")</MudChip>
-                        </div>
-                    </MudListItem>
-                }
-            </MudList>
-        }
-    </MudCardContent>
-</MudCard>
+@using ApexCharts
+
+@if (Data != null && Data.Any() && Data.All(d => !string.IsNullOrEmpty(d.Label)))
+{
+    <div style="position: relative; width: 100%; max-width: 450px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 10px; font-size: 14px; color: #666;">
+            @Title
+        </div>
+        <ApexChart TItem="PieChartData"
+                   Title=""
+                   Height="350"
+                   Options="options">
+            <ApexPointSeries TItem="PieChartData"
+                             Items="Data"
+                             Name="Count"
+                             SeriesType="SeriesType.Donut"
+                             XValue="@(e => e.Label)"
+                             YAggregate="@(e => e.Sum(x => (decimal)x.Value))"
+                             OrderBy="@(e => e.Y)" />
+        </ApexChart>
+    </div>
+}
+else if (Data != null && Data.Any())
+{
+    <div style="text-align: center; padding: 20px; color: #999;">
+        Loading chart data...
+    </div>
+}
 
 @code {
     [Parameter] public List<PieChartData>? Data { get; set; }
     [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Gender { get; set; } = "";
+
+    private ApexChartOptions<PieChartData> options = new()
+    {
+        Chart = new ApexCharts.Chart
+        {
+            Type = ApexCharts.ChartType.Donut
+        },
+        Legend = new Legend
+        {
+            Position = LegendPosition.Right
+        },
+        Colors = new List<string> { "#42A5F5", "#FF7043", "#66BB6A", "#FFA726", "#EC407A" },
+        PlotOptions = new PlotOptions
+        {
+            Pie = new PlotOptionsPie
+            {
+                Donut = new PlotOptionsDonut
+                {
+                    Size = "70%"
+                }
+            }
+        },
+        DataLabels = new DataLabels
+        {
+            Enabled = true
+        }
+    };
 }

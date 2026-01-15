@@ -1,19 +1,18 @@
 @inject AppState AppState
 @inject HttpClient Http
+@using blazor_frontend.Services
 
-<div style="padding: 20px; width: 90%; display: flex; flex-direction: column; align-items: center;">
-    <div style="width: 100%; display: flex; justify-content: space-between;">
-        <MudText Typo="Typo.body2">@AppState.SelectedStateMinYear</MudText>
-        <MudText Typo="Typo.body2">@AppState.SelectedStateMaxYear</MudText>
-    </div>
+<div style="width: 100%; max-width: 800px; margin: 0 auto; padding: 0 20px;">
     <MudSlider T="int" 
-               Value="@(AppState.SelectedYear ?? 0)" 
+               Value="@(AppState.SelectedYear ?? AppState.CommitedYear ?? 0)" 
                ValueChanged="@OnValueChanged"
                Min="@(AppState.SelectedStateMinYear ?? 0)"
                Max="@(AppState.SelectedStateMaxYear ?? 0)"
                Step="1"
-               ValueLabel="true"
+               Color="Color.Primary"
                Style="width: 100%;">
+        <MudText Typo="Typo.caption" Style="position: absolute; left: 0; bottom: -20px;">@AppState.SelectedStateMinYear</MudText>
+        <MudText Typo="Typo.caption" Style="position: absolute; right: 0; bottom: -20px;">@AppState.SelectedStateMaxYear</MudText>
     </MudSlider>
 </div>
 
@@ -28,18 +27,32 @@
 
         try
         {
-            var result = await Http.GetFromJsonAsync<MaleFemaleCountsDto>(
+            // Fetch both male/female counts and top names
+            var countsTask = Http.GetFromJsonAsync<MaleFemaleCountsDto>(
                 $"/api/BabyNames/male-female-counts?stateCode={AppState.SelectedState.StateCode}&year={value}");
+            
+            var topNamesTask = Http.GetFromJsonAsync<TopPopularMaleFemaleNameCounts>(
+                $"/api/BabyNames/top-popular-male-female-name-counts?stateCode={AppState.SelectedState.StateCode}&year={value}");
 
-            if (result != null)
+            await Task.WhenAll(countsTask, topNamesTask);
+
+            var counts = await countsTask;
+            var topNames = await topNamesTask;
+
+            if (counts != null)
             {
-                AppState.SetDistinctMaleCountForSelectedState(result.Item1);
-                AppState.SetDistinctFemaleCountForSelectedState(result.Item2);
+                AppState.SetDistinctMaleCountForSelectedState(counts.Item1);
+                AppState.SetDistinctFemaleCountForSelectedState(counts.Item2);
+            }
+
+            if (topNames != null)
+            {
+                AppState.SetTopPopularMaleFemaleNameCounts(topNames);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error fetching male/female counts: {ex.Message}");
+            Console.WriteLine($"Error fetching data for year change: {ex.Message}");
         }
     }
 

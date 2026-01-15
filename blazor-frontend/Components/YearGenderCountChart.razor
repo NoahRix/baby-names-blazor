@@ -46,6 +46,10 @@
                     FemaleCount = x.FemaleCount 
                 }).ToList();
             }
+            else
+            {
+                dataLoaded = new List<YearGenderData>();
+            }
             StateHasChanged();
             return Task.CompletedTask;
         });
@@ -62,24 +66,6 @@
                 MaleCount = x.MaleCount, 
                 FemaleCount = x.FemaleCount 
             }).ToList();
-        }
-    }
-
-    private async Task LoadDataAsync()
-    {
-        try
-        {
-            var result = await Http.GetFromJsonAsync<List<YearGenderData>>(
-                $"/api/BabyNames/year-gender-counts?minYear={AppState.SelectedStateMinYear}&maxYear={AppState.SelectedStateMaxYear}&stateCode={AppState.SelectedState?.StateCode}");
-
-            if (result != null)
-            {
-                dataLoaded = result;
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching year-gender counts: {ex.Message}");
         }
     }
 

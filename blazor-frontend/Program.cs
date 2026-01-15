@@ -21,7 +21,7 @@ builder.Services.AddScoped(sp => {
     }
     return client;
 });
-builder.Services.AddSingleton<AppState>();
+builder.Services.AddScoped<AppState>();
 builder.Services.AddMudServices();
 builder.Services.AddHttpContextAccessor();
 

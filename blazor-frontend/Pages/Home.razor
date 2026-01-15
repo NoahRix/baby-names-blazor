@@ -3,46 +3,48 @@
 
 <PageTitle>Baby Names Explorer</PageTitle>
 
-<h1>Baby Names Explorer</h1>
-<p>HOT RELOAD TEST - If you see this, it worked! Noah Rix is very cute</p>
-
-<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="d-flex flex-column align-center">
-    <MudPaper Class="pa-4 ma-4" Elevation="0" Style="width: 100%;">
-        <h2>US Map Component Below:</h2>
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="d-flex flex-column align-center" Style="padding: 2rem 1rem;">
+    <MudPaper Elevation="0" Style="width: 100%; max-width: 1200px;">
         <USMap />
         
         @if (AppState.SelectedState != null)
         {
-            <div class="d-flex flex-column align-center mt-4">
-                <MudText Typo="Typo.h6">Select a year</MudText>
-                <MudText>@AppState.SelectedYear</MudText>
+            <div class="d-flex flex-column align-center" Style="margin-top: 1rem;">
+                <MudText Typo="Typo.body1" Style="margin-bottom: 0.5rem;">Select a year</MudText>
                 <NumericalSlider />
             </div>
         }
     </MudPaper>
 
-    <YearGenderCountChart />
-
-    @if (AppState.CommitedYear != null && AppState.TopPopularMaleFemaleNameCounts != null)
+    @if (AppState.SelectedState != null)
     {
-        <MudGrid Spacing="6" Justify="Justify.Center" Style="width: 90%; max-width: 100%; margin-top: 2rem;">
-            <MudItem xs="12" md="6" Class="d-flex flex-column align-center">
-                <MudText Typo="Typo.h6">
-                    Distinct Male Name Count: @AppState.DistinctMaleCountForSelectedState?.ToString("N0")
-                </MudText>
-                <PieChartWithCenterLabel 
-                    Title="@($"Top 5 Male Names for {AppState.SelectedState?.StateName}")"
-                    Data="@AppState.TopPopularMaleFemaleNameCounts.Male" />
-            </MudItem>
-            <MudItem xs="12" md="6" Class="d-flex flex-column align-center">
-                <MudText Typo="Typo.h6">
-                    Distinct Female Name Count: @AppState.DistinctFemaleCountForSelectedState?.ToString("N0")
-                </MudText>
-                <PieChartWithCenterLabel 
-                    Title="@($"Top 5 Female Names for {AppState.SelectedState?.StateName}")"
-                    Data="@AppState.TopPopularMaleFemaleNameCounts.Female" />
-            </MudItem>
-        </MudGrid>
+        <div Style="width: 100%; max-width: 1200px; margin-top: 2rem;">
+            <YearGenderCountChart />
+        </div>
+
+        @if (AppState.CommitedYear != null && AppState.TopPopularMaleFemaleNameCounts != null)
+        {
+            <div class="d-flex justify-center" Style="width: 100%; max-width: 1200px; margin-top: 2rem; gap: 2rem; flex-wrap: wrap;">
+                <div Style="flex: 1; min-width: 300px; max-width: 500px;">
+                    <MudText Typo="Typo.h6" Align="Align.Center" Style="margin-bottom: 1rem;">
+                        Distinct Male Name Count: @AppState.DistinctMaleCountForSelectedState?.ToString("N0")
+                    </MudText>
+                    <PieChartWithCenterLabel @key="@($"male-{AppState.SelectedState?.StateCode}-{AppState.CommitedYear}")"
+                        Title="@($"Top 5 Male Names for {AppState.SelectedState?.StateName}")"
+                        Data="@AppState.TopPopularMaleFemaleNameCounts.Male"
+                        Gender="Male" />
+                </div>
+                <div Style="flex: 1; min-width: 300px; max-width: 500px;">
+                    <MudText Typo="Typo.h6" Align="Align.Center" Style="margin-bottom: 1rem;">
+                        Distinct Female Name Count: @AppState.DistinctFemaleCountForSelectedState?.ToString("N0")
+                    </MudText>
+                    <PieChartWithCenterLabel @key="@($"female-{AppState.SelectedState?.StateCode}-{AppState.CommitedYear}")"
+                        Title="@($"Top 5 Female Names for {AppState.SelectedState?.StateName}")"
+                        Data="@AppState.TopPopularMaleFemaleNameCounts.Female"
+                        Gender="Female" />
+                </div>
+            </div>
+        }
     }
 </MudContainer>
 
