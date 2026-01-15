@@ -1,6 +1,5 @@
 ﻿@page "/"
 @inject AppState AppState
-@inject HttpClient Http
 
 <PageTitle>Baby Names Explorer</PageTitle>
 
@@ -48,8 +47,6 @@
 </MudContainer>
 
 @code {
-    private bool isLoadingData = false;
-    
     protected override void OnInitialized()
     {
         AppState.OnChange += OnStateChanged;
@@ -57,87 +54,17 @@
 
     private async void OnStateChanged()
     {
-        // Prevent duplicate calls while already loading
-        if (isLoadingData)
-            return;
-
-        if (AppState.CommitedYear != null && 
-            AppState.SelectedState != null && 
-            AppState.SelectedStateMinYear != null && 
-            AppState.SelectedStateMaxYear != null)
+        await InvokeAsync(() =>
         {
-            isLoadingData = true;
-            
-            try
-            {
-                if (AppState.CommitedYear >= AppState.SelectedStateMinYear && 
-                    AppState.CommitedYear <= AppState.SelectedStateMaxYear)
-                {
-                    await GetDistinctGenderCountsAsync();
-                    await GetTopPopularMaleFemaleNameCountsAsync();
-                }
-                else
-                {
-                    AppState.SetCommitedYear(AppState.SelectedStateMinYear);
-                    await GetDistinctGenderCountsAsync();
-                }
-                StateHasChanged();
-            }
-            finally
-            {
-                isLoadingData = false;
-            }
-        }
-    }
-
-    private async Task GetDistinctGenderCountsAsync()
-    {
-        if (AppState.CommitedYear == null || AppState.CommitedYear == 0)
-            return;
-
-        try
-        {
-            var result = await Http.GetFromJsonAsync<MaleFemaleCountsDto>(
-                $"/api/BabyNames/male-female-counts?stateCode={AppState.SelectedState?.StateCode}&year={AppState.CommitedYear}");
-
-            if (result != null)
-            {
-                AppState.SetDistinctMaleCountForSelectedState(result.Item1);
-                AppState.SetDistinctFemaleCountForSelectedState(result.Item2);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-        }
-    }
-
-    private async Task GetTopPopularMaleFemaleNameCountsAsync()
-    {
-        if (AppState.SelectedState == null || AppState.CommitedYear == null)
-            return;
-
-        try
-        {
-            var result = await Http.GetFromJsonAsync<TopPopularMaleFemaleNameCounts>(
-                $"/api/BabyNames/top-popular-male-female-name-counts?stateCode={AppState.SelectedState.StateCode}&year={AppState.CommitedYear}");
-
-            AppState.SetTopPopularMaleFemaleNameCounts(result);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-        }
+            Console.WriteLine($"Home.OnStateChanged fired - CommitedYear: {AppState.CommitedYear}, SelectedState: {AppState.SelectedState?.StateName}");
+            // Just trigger a re-render - all data is already in AppState from USMap
+            StateHasChanged();
+            return Task.CompletedTask;
+        });
     }
 
     public void Dispose()
     {
         AppState.OnChange -= OnStateChanged;
-    }
-
-    public class MaleFemaleCountsDto
-    {
-        public int Item1 { get; set; }
-        public int Item2 { get; set; }
     }
 }

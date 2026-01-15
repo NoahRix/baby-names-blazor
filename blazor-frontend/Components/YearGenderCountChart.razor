@@ -35,24 +35,33 @@
 
     private async void OnStateChanged()
     {
-        if (AppState.SelectedStateMinYear != null && 
-            AppState.SelectedStateMaxYear != null && 
-            AppState.SelectedState != null)
+        await InvokeAsync(() =>
         {
-            await LoadDataAsync();
+            if (AppState.YearGenderCounts != null)
+            {
+                dataLoaded = AppState.YearGenderCounts.Select(x => new YearGenderData 
+                { 
+                    Year = x.Year, 
+                    MaleCount = x.MaleCount, 
+                    FemaleCount = x.FemaleCount 
+                }).ToList();
+            }
             StateHasChanged();
-        }
+            return Task.CompletedTask;
+        });
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (!hasInitialized && 
-            AppState.SelectedStateMinYear != null && 
-            AppState.SelectedStateMaxYear != null && 
-            AppState.SelectedState != null)
+        if (!hasInitialized && AppState.YearGenderCounts != null)
         {
             hasInitialized = true;
-            await LoadDataAsync();
+            dataLoaded = AppState.YearGenderCounts.Select(x => new YearGenderData 
+            { 
+                Year = x.Year, 
+                MaleCount = x.MaleCount, 
+                FemaleCount = x.FemaleCount 
+            }).ToList();
         }
     }
 

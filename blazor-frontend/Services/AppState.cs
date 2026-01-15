@@ -10,6 +10,7 @@ public class AppState
     public int? DistinctMaleCountForSelectedState { get; private set; }
     public int? DistinctFemaleCountForSelectedState { get; private set; }
     public TopPopularMaleFemaleNameCounts? TopPopularMaleFemaleNameCounts { get; private set; }
+    public List<YearGenderCount>? YearGenderCounts { get; private set; }
 
     public event Action? OnChange;
 
@@ -29,7 +30,9 @@ public class AppState
 
     public void SetCommitedYear(int? year)
     {
+        Console.WriteLine($"SetCommitedYear called with: {year}");
         CommitedYear = year;
+        Console.WriteLine($"CommitedYear now: {CommitedYear}");
         NotifyStateChanged();
     }
 
@@ -69,7 +72,56 @@ public class AppState
         NotifyStateChanged();
     }
 
-    private void NotifyStateChanged() => OnChange?.Invoke();
+    public void SetYearGenderCounts(List<YearGenderCount>? counts)
+    {
+        YearGenderCounts = counts;
+        NotifyStateChanged();
+    }
+
+    public void SetAllStateData(
+        StateInfo? state,
+        int minYear,
+        int maxYear,
+        int? commitedYear,
+        List<YearGenderCount>? yearGenderCounts,
+        int? maleCount,
+        int? femaleCount,
+        TopPopularMaleFemaleNameCounts? topNames)
+    {
+        SelectedState = state;
+        SelectedStateMinYear = minYear;
+        SelectedStateMaxYear = maxYear;
+        if (commitedYear.HasValue)
+        {
+            CommitedYear = commitedYear;
+        }
+        YearGenderCounts = yearGenderCounts;
+        DistinctMaleCountForSelectedState = maleCount;
+        DistinctFemaleCountForSelectedState = femaleCount;
+        TopPopularMaleFemaleNameCounts = topNames;
+        
+        NotifyStateChanged();
+    }
+
+    private void NotifyStateChanged()
+    {
+        var handlers = OnChange?.GetInvocationList();
+        if (handlers == null) return;
+        
+        Console.WriteLine($"NotifyStateChanged called - {handlers.Length} subscribers");
+        
+        foreach (var handler in handlers)
+        {
+            try
+            {
+                ((Action)handler)?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in event handler: {ex.Message}");
+            }
+        }
+    }
 }
 
 public class StateInfo
@@ -89,4 +141,11 @@ public class PieChartData
 {
     public string Label { get; set; } = string.Empty;
     public int Value { get; set; }
+}
+
+public class YearGenderCount
+{
+    public int Year { get; set; }
+    public int MaleCount { get; set; }
+    public int FemaleCount { get; set; }
 }

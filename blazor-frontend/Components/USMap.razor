@@ -1,6 +1,6 @@
+@using blazor_frontend.Services
 @inject AppState AppState
 @inject HttpClient Http
-@inject IJSRuntime JS
 
 <MudPaper Class="pa-4" Style="width: 100%; max-width: 1600px; margin: 0 auto;">
     @if (errorMessage != null)
@@ -70,26 +70,65 @@
 
     private async Task OnClickAsync(StateInfo state)
     {
-        try
+        await InvokeAsync(async () =>
         {
-            var result = await Http.GetFromJsonAsync<MinMaxYearDto>(
-                $"/api/BabyNames/min-max-years-using-state?stateCode={state.StateCode}");
-
-            if (result != null)
+            try
             {
-                // Batch all state updates into one to prevent multiple OnChange events
-                AppState.SetStateWithYearRange(state, result.MinYear, result.MaxYear);
+                Console.WriteLine($"State clicked: {state.StateName} ({state.StateCode})");
                 
-                if (AppState.CommitedYear == null)
+                // Fetch min-max years first
+                var minMaxResult = await Http.GetFromJsonAsync<MinMaxYearDto>(
+                    $"/api/BabyNames/min-max-years-using-state?stateCode={state.StateCode}");
+
+                if (minMaxResult != null)
                 {
-                    AppState.SetCommitedYear(result.MinYear);
+                    Console.WriteLine($"Setting state with year range: {minMaxResult.MinYear}-{minMaxResult.MaxYear}");
+                    
+                    var commitYear = AppState.CommitedYear ?? minMaxResult.MinYear;
+
+                    // Now fetch the other data with the correct parameters
+                    // Fetch year-gender counts with minYear and maxYear
+                    var yearGenderCountsTask = Http.GetFromJsonAsync<YearGenderCount[]>(
+                        $"/api/BabyNames/year-gender-counts?stateCode={state.StateCode}&minYear={minMaxResult.MinYear}&maxYear={minMaxResult.MaxYear}");
+
+                    // Fetch male-female counts with the committed year
+                    var maleFemaleCountsTask = Http.GetFromJsonAsync<MaleFemaleCountDto>(
+                        $"/api/BabyNames/male-female-counts?stateCode={state.StateCode}&year={commitYear}");
+
+                    // Fetch top popular names with the committed year
+                    var topNamesTask = Http.GetFromJsonAsync<TopPopularMaleFemaleNameCounts>(
+                        $"/api/BabyNames/top-popular-male-female-name-counts?stateCode={state.StateCode}&year={commitYear}");
+
+                    // Wait for all requests to complete
+                    await Task.WhenAll(yearGenderCountsTask, maleFemaleCountsTask, topNamesTask);
+
+                    var yearGenderCounts = await yearGenderCountsTask;
+                    var maleFemaleCounts = await maleFemaleCountsTask;
+                    var topNames = await topNamesTask;
+
+                    Console.WriteLine($"Year-gender counts loaded: {yearGenderCounts?.Length ?? 0} records");
+                    
+                    // Update all state at once to trigger only one notification
+                    AppState.SetAllStateData(
+                        state,
+                        minMaxResult.MinYear,
+                        minMaxResult.MaxYear,
+                        commitYear,
+                        yearGenderCounts?.ToList(),
+                        maleFemaleCounts?.MaleCount,
+                        maleFemaleCounts?.FemaleCount,
+                        topNames
+                    );
                 }
+
+                StateHasChanged();
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching min/max years: {ex.Message}");
-        }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching state data: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+        });
     }
 
     private string GetFillColor(StateInfo state)
@@ -110,5 +149,11 @@
     {
         public int MinYear { get; set; }
         public int MaxYear { get; set; }
+    }
+
+    public class MaleFemaleCountDto
+    {
+        public int MaleCount { get; set; }
+        public int FemaleCount { get; set; }
     }
 }
