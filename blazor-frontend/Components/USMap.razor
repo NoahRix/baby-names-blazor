@@ -27,6 +27,7 @@
                       @onmouseenter="@(() => OnMouseEnter(state))"
                       @onmouseleave="OnMouseLeave"
                       @onclick="@(() => OnClickAsync(state))"
+                      @onclick:preventDefault="true"
                       style="cursor: pointer;">
                     <title>@state.StateName</title>
                 </path>
@@ -83,8 +84,11 @@
                 {
                     Console.WriteLine($"Setting state with year range: {minMaxResult.MinYear}-{minMaxResult.MaxYear}");
                     
-                    // Auto-set to min year when state is selected
-                    var commitYear = minMaxResult.MinYear;
+                    // Maintain currently selected year if within range, otherwise set to min year
+                    var currentYear = AppState.CommitedYear ?? AppState.SelectedYear;
+                    var commitYear = (currentYear.HasValue && currentYear.Value >= minMaxResult.MinYear && currentYear.Value <= minMaxResult.MaxYear) 
+                        ? currentYear.Value 
+                        : minMaxResult.MinYear;
 
                     // Now fetch the other data with the correct parameters
                     // Fetch year-gender counts with minYear and maxYear

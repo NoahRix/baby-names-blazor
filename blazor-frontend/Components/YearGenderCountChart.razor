@@ -1,77 +1,94 @@
 @inject HttpClient Http
 @inject AppState AppState
+@using ApexCharts
 
-@if (dataLoaded.Any())
-{
-    <MudPaper Class="pa-4" Style="width: 100%; max-width: 1600px;">
-        <MudCard>
-            <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-4">Gender Count by Year</MudText>
-                <MudTable Items="@dataLoaded.Take(20)" Dense="true" Hover="true">
-                    <HeaderContent>
-                        <MudTh>Year</MudTh>
-                        <MudTh>Male Count</MudTh>
-                        <MudTh>Female Count</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Year">@context.Year</MudTd>
-                        <MudTd DataLabel="Male">@context.MaleCount.ToString("N0")</MudTd>
-                        <MudTd DataLabel="Female">@context.FemaleCount.ToString("N0")</MudTd>
-                    </RowTemplate>
-                </MudTable>
-            </MudCardContent>
-        </MudCard>
-    </MudPaper>
-}
+<MudPaper Class="pa-4" Style="width: 100%; max-width: 1600px;">
+    @if (dataLoaded.Any())
+    {
+        <ApexChart @ref="chart"
+                   TItem="YearGenderData"
+                   Title="Gender Count by Year"
+                   Height="400"
+                   Options="chartOptions">
+            
+            <ApexPointSeries TItem="YearGenderData"
+                             Items="dataLoaded"
+                             Name="Male"
+                             SeriesType="SeriesType.Line"
+                             XValue="@(e => e.Year)"
+                             YValue="@(e => (decimal)e.MaleCount)"
+                             Color="#2196F3"
+                             ShowDataLabels="false" />
+            
+            <ApexPointSeries TItem="YearGenderData"
+                             Items="dataLoaded"
+                             Name="Female"
+                             SeriesType="SeriesType.Line"
+                             XValue="@(e => e.Year)"
+                             YValue="@(e => (decimal)e.FemaleCount)"
+                             Color="#FFA726"
+                             ShowDataLabels="false" />
+        </ApexChart>
+    }
+    else
+    {
+        <div Style="height: 400px; display: flex; align-items: center; justify-content: center;">
+            <MudProgressCircular Indeterminate="true" />
+        </div>
+    }
+</MudPaper>
 
 @code {
+    private ApexChart<YearGenderData>? chart;
     private List<YearGenderData> dataLoaded = new();
-    private bool hasInitialized = false;
+    private ApexChartOptions<YearGenderData> chartOptions = new();
 
     protected override void OnInitialized()
     {
-        AppState.OnChange += OnStateChanged;
+        chartOptions = new ApexChartOptions<YearGenderData>
+        {
+            Xaxis = new XAxis
+            {
+                TickAmount = 10,
+                
+                Labels = new XAxisLabels
+                {
+                    Rotate = -45,
+                    RotateAlways = false
+                }
+            },
+            Yaxis = new List<YAxis>
+            {
+                new YAxis
+                {
+                    Labels = new YAxisLabels
+                    {
+                        Formatter = "function(value) { return value.toLocaleString(); }"
+                    }
+                }
+            }
+        };
+        
+        LoadData();
     }
 
-    private async void OnStateChanged()
+    private void LoadData()
     {
-        await InvokeAsync(() =>
+        if (AppState.YearGenderCounts != null && AppState.YearGenderCounts.Any())
         {
-            if (AppState.YearGenderCounts != null)
-            {
-                dataLoaded = AppState.YearGenderCounts.Select(x => new YearGenderData 
-                { 
-                    Year = x.Year, 
-                    MaleCount = x.MaleCount, 
-                    FemaleCount = x.FemaleCount 
-                }).ToList();
-            }
-            else
-            {
-                dataLoaded = new List<YearGenderData>();
-            }
-            StateHasChanged();
-            return Task.CompletedTask;
-        });
-    }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (!hasInitialized && AppState.YearGenderCounts != null)
-        {
-            hasInitialized = true;
             dataLoaded = AppState.YearGenderCounts.Select(x => new YearGenderData 
             { 
                 Year = x.Year, 
                 MaleCount = x.MaleCount, 
                 FemaleCount = x.FemaleCount 
             }).ToList();
+            
+            Console.WriteLine($"YearGenderCountChart loaded {dataLoaded.Count} data points for state");
         }
-    }
-
-    public void Dispose()
-    {
-        AppState.OnChange -= OnStateChanged;
+        else
+        {
+            dataLoaded = new List<YearGenderData>();
+        }
     }
 
     public class YearGenderData
