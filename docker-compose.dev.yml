@@ -31,6 +31,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - DOTNET_USE_POLLING_FILE_WATCHER=true
       - ASPNETCORE_URLS=http://0.0.0.0:5173
+      - DOTNET_WATCH_SUPPRESS_BROWSER_REFRESH=1
     command: dotnet watch run --non-interactive
     depends_on:
       - api
