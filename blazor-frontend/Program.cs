@@ -13,15 +13,28 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped(sp => {
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
     var client = httpClientFactory.CreateClient();
-    var request = sp.GetRequiredService<IHttpContextAccessor>()?.HttpContext?.Request;
-    if (request != null)
+
+    // When hosted behind the nginx reverse proxy, the browser-facing Host is not
+    // reachable from inside the container, so the base URL is supplied via configuration.
+    // Falls back to the current request's origin for direct (non-proxied) hosting.
+    var baseUrl = sp.GetRequiredService<IConfiguration>()["HttpClientBaseUrl"];
+    if (!string.IsNullOrWhiteSpace(baseUrl))
     {
-        var baseUrl = $"{request.Scheme}://{request.Host}";
         client.BaseAddress = new Uri(baseUrl);
     }
+    else
+    {
+        var request = sp.GetRequiredService<IHttpContextAccessor>()?.HttpContext?.Request;
+        if (request != null)
+        {
+            client.BaseAddress = new Uri($"{request.Scheme}://{request.Host}");
+        }
+    }
+
     return client;
 });
 builder.Services.AddScoped<AppState>();
+builder.Services.AddScoped<ThemeState>();
 builder.Services.AddMudServices();
 builder.Services.AddHttpContextAccessor();
 

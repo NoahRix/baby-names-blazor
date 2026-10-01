@@ -1,4 +1,9 @@
-﻿<MudThemeProvider />
+﻿@inject ThemeState ThemeState
+@implements IDisposable
+
+<MudThemeProvider Theme="ThemeState.Theme"
+                  IsDarkMode="ThemeState.IsDarkMode"
+                  ObserveSystemThemeChange="false" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -15,3 +20,22 @@
         </LayoutView>
     </NotFound>
 </Router>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ThemeState.OnChange += OnThemeChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ThemeState.InitializeAsync();
+        }
+    }
+
+    private void OnThemeChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => ThemeState.OnChange -= OnThemeChanged;
+}

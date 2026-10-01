@@ -1,5 +1,6 @@
 @inject HttpClient Http
 @inject AppState AppState
+@inject ThemeState ThemeState
 @using ApexCharts
 
 <MudPaper Class="pa-4" Style="width: 100%; max-width: 1600px;">
@@ -45,12 +46,30 @@
 
     protected override void OnInitialized()
     {
-        chartOptions = new ApexChartOptions<YearGenderData>
+        chartOptions = BuildOptions();
+
+        LoadData();
+    }
+
+    private ApexChartOptions<YearGenderData> BuildOptions()
+    {
+        var isDark = ThemeState.IsDarkMode;
+
+        return new ApexChartOptions<YearGenderData>
         {
+            Chart = new ApexCharts.Chart
+            {
+                ForeColor = isDark ? "#E0E0E0" : "#373D3F",
+                Background = "transparent"
+            },
+            Theme = new ApexCharts.Theme
+            {
+                Mode = isDark ? ApexCharts.Mode.Dark : ApexCharts.Mode.Light
+            },
             Xaxis = new XAxis
             {
                 TickAmount = 10,
-                
+
                 Labels = new XAxisLabels
                 {
                     Rotate = -45,
@@ -66,10 +85,12 @@
                         Formatter = "function(value) { return value.toLocaleString(); }"
                     }
                 }
+            },
+            Tooltip = new Tooltip
+            {
+                Theme = isDark ? ApexCharts.Mode.Dark : ApexCharts.Mode.Light
             }
         };
-        
-        LoadData();
     }
 
     private void LoadData()

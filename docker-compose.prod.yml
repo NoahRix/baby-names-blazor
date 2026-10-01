@@ -24,7 +24,10 @@ services:
     networks:
       - prod-net
     depends_on:
-      - api      
+      - api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - HttpClientBaseUrl=http://nginx:80
 
   api:
     container_name: api-prod

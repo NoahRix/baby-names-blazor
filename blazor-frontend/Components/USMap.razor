@@ -21,14 +21,11 @@
             @foreach (var state in states)
             {
                 <path d="@state.DrawPath"
-                      stroke="white"
-                      stroke-width="1"
-                      fill="@GetFillColor(state)"
+                      class="us-state @GetStateClass(state)"
                       @onmouseenter="@(() => OnMouseEnter(state))"
                       @onmouseleave="OnMouseLeave"
                       @onclick="@(() => OnClickAsync(state))"
-                      @onclick:preventDefault="true"
-                      style="cursor: pointer;">
+                      @onclick:preventDefault="true">
                     <title>@state.StateName</title>
                 </path>
             }
@@ -135,13 +132,19 @@
         });
     }
 
-    private string GetFillColor(StateInfo state)
+    private string GetStateClass(StateInfo state)
     {
         if (AppState.SelectedState?.StateName == state.StateName)
-            return "orange";
+        {
+            return "us-state-selected";
+        }
+
         if (hoveredState == state.StateName)
-            return "#4CAF50";
-        return "#2196F3";
+        {
+            return "us-state-hovered";
+        }
+
+        return string.Empty;
     }
 
     public void Dispose()

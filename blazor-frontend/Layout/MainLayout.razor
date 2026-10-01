@@ -1,3 +1,26 @@
 ﻿@inherits LayoutComponentBase
+@inject ThemeState ThemeState
+@implements IDisposable
+
+<div class="theme-bar">
+    <MudIconButton Icon="@ThemeIcon"
+                   Color="Color.Primary"
+                   aria-label="@ThemeToggleLabel"
+                   OnClick="ToggleThemeAsync" />
+</div>
 
 @Body
+
+@code {
+    private string ThemeIcon => ThemeState.IsDarkMode
+        ? Icons.Material.Filled.Brightness7
+        : Icons.Material.Filled.Brightness4;
+
+    private string ThemeToggleLabel => $"Switch to {(ThemeState.IsDarkMode ? "light" : "dark")} theme";
+
+    protected override void OnInitialized() => ThemeState.OnChange += StateHasChanged;
+
+    private Task ToggleThemeAsync() => ThemeState.ToggleThemeAsync();
+
+    public void Dispose() => ThemeState.OnChange -= StateHasChanged;
+}
