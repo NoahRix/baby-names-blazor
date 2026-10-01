@@ -45,6 +45,7 @@ public sealed class ThemeState : IAsyncDisposable
             _module = await _js.InvokeAsync<IJSObjectReference>("import", $"./js/theme.js?v={version}");
             var mode = await _module.InvokeAsync<string>("getMode");
             Mode = Parse(mode);
+            await _module.InvokeVoidAsync("applyTheme", ToStorageValue(Mode));
             NotifyStateChanged();
         }
         catch (JSDisconnectedException)
