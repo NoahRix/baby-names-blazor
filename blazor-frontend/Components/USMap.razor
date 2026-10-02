@@ -2,7 +2,7 @@
 @inject AppState AppState
 @inject HttpClient Http
 
-<MudPaper Class="pa-4" Style="width: 100%; max-width: 1600px; margin: 0 auto;">
+<div style="width: 100%; max-width: 1600px; margin: 0 auto;">
     @if (errorMessage != null)
     {
         <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
@@ -31,7 +31,7 @@
             }
         }
     </svg>
-</MudPaper>
+</div>
 
 @code {
     private StateInfo[]? states;
