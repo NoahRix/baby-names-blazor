@@ -3,4 +3,17 @@
     top: 0.75rem;
     right: 1rem;
     z-index: 1100;
+    line-height: 0;
+    border-radius: 50%;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+.theme-bar ::deep .theme-toggle:hover {
+    background-color: var(--bg-secondary);
+}
+
+[data-theme="dark"] .theme-bar ::deep .theme-toggle {
+    color: #81c784;
 }

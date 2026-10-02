@@ -43,6 +43,7 @@
     private ApexChart<YearGenderData>? chart;
     private List<YearGenderData> dataLoaded = new();
     private ApexChartOptions<YearGenderData> chartOptions = new();
+    private readonly string _chartId = $"year-gender-{Guid.NewGuid():N}";
 
     protected override void OnInitialized()
     {
@@ -59,6 +60,7 @@
         {
             Chart = new ApexCharts.Chart
             {
+                Id = _chartId,
                 ForeColor = isDark ? "#E0E0E0" : "#373D3F",
                 Background = "transparent"
             },

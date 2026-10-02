@@ -33,6 +33,8 @@ else if (Data != null && Data.Any())
     [Parameter] public string Title { get; set; } = string.Empty;
     [Parameter] public string Gender { get; set; } = "";
 
+    private readonly string _chartId = $"pie-{Guid.NewGuid():N}";
+
     private ApexChartOptions<PieChartData> options => BuildOptions();
 
     private ApexChartOptions<PieChartData> BuildOptions()
@@ -43,6 +45,7 @@ else if (Data != null && Data.Any())
         {
             Chart = new ApexCharts.Chart
             {
+                Id = _chartId,
                 Type = ApexCharts.ChartType.Donut,
                 ForeColor = isDark ? "#E0E0E0" : "#373D3F",
                 Background = "transparent"
